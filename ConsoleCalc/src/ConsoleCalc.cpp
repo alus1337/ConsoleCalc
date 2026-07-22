@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <optional>
 
 void printWelcome()
 {
@@ -8,10 +9,13 @@ void printWelcome()
 	std::cout << "> ";
 }
 
-std::string getUserInput()
+std::optional<std::string> getUserInput()
 {
 	std::string input;
-	std::getline(std::cin, input);
+	if (!std::getline(std::cin, input))
+	{
+		return std::nullopt;
+	}
 	return input;
 }
 
@@ -25,7 +29,7 @@ bool isValidExpression()
 	return false;
 }
 
-int expressionResult(int left_operand, char charCharacter, int right_operand)
+std::optional<int> expressionResult(int left_operand, char charCharacter, int right_operand)
 {
 	switch (charCharacter) {
 	case '+':
@@ -41,9 +45,13 @@ int expressionResult(int left_operand, char charCharacter, int right_operand)
 		else
 		{
 			std::cout << "Error: Division by zero is not allowed.\n";
-			return 0;
+			return std::nullopt;
 		}
+	default:
+		return std::nullopt;
 	}
+
+	
 }
 
 int main()
@@ -53,16 +61,15 @@ int main()
 		clearConsole();
 		printWelcome();
 
-		std::string input;
-		input = getUserInput();
+		const std::optional<std::string> input = getUserInput();
 
 		// check if any input was provided
-		if (input.size() == 0)
+		if (!input.has_value())
 		{
 			continue;
 		}
 
-		if (input == "help" || input == "Help")
+		if (input.value() == "help" || input.value() == "Help")
 		{
 			clearConsole();
 			std::cout << "Using ConsoleCalc is simple just create a 3 input expression [\"operand\" + \"operator\" + \"operand\"]\n";
@@ -76,7 +83,7 @@ int main()
 		}
 
 		// check if the input is a valid expression
-		std::istringstream stream(input);
+		std::istringstream stream(input.value());
 		stream.exceptions(std::ios::failbit | std::ios::badbit);
 
 		int leftOperand;
@@ -85,7 +92,10 @@ int main()
 		try
 		{ 
 			stream >> leftOperand >> operatorChar >> rightOperand;
-
+			if (!stream.eof())
+			{
+				throw std::ios_base::failure("");
+			}
 		}
 		catch (const std::ios_base::failure& e)
 		{
@@ -109,7 +119,7 @@ int main()
 			continue;
 		}
 
-		std::cout << expressionResult(leftOperand, operatorChar, rightOperand) << std::endl;
+		std::cout << expressionResult(leftOperand, operatorChar, rightOperand).value() << std::endl;
 		std::cin.get();
 	}
 
